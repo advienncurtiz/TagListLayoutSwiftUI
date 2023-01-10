@@ -31,6 +31,46 @@ struct ContentView: View {
         "Whatda"
     ]
     
+    @ViewBuilder
+    var list1: some View {
+        ForEach(items.indices, id: \.self) { index in
+            HStack {
+                ForEach(items[index].indices, id: \.self) { chipIndex in
+                    let item = items[index][chipIndex]
+                    
+                    Text(items[index][chipIndex].title)
+                        .padding(16)
+                        .lineLimit(1)
+                        .overlay {
+                            GeometryReader { reader -> Color in
+                                let maxX = reader.frame(in: .global).maxX
+                                
+                                if maxX > UIScreen.main.bounds.width - 30 && !item.isExceeded {
+                                    DispatchQueue.main.async {
+                                        
+                                        items[index][chipIndex].isExceeded = true
+                                        
+                                        let lastItem = items[index][chipIndex]
+                                        
+                                        items.append([lastItem])
+                                        items[index].remove(at: chipIndex)
+                                    }
+                                }
+                                
+                                return Color.clear
+                            }
+                        }
+                        .onTapGesture(perform: {
+                            items[index][chipIndex].isSelected = !item.isSelected
+                        })
+                        .background(item.isSelected ? RoundedRectangle(cornerRadius: 16).fill(Color.orange) : RoundedRectangle(cornerRadius: 16).fill(Color.white))
+             
+                }
+            }
+            
+        }
+    }
+    
     var body: some View {
         
         VStack(alignment: .leading) {
@@ -44,41 +84,7 @@ struct ContentView: View {
             }
 
             
-            ForEach(items.indices, id: \.self) { index in
-                HStack {
-                    ForEach(items[index].indices, id: \.self) { chipIndex in
-                        Text(items[index][chipIndex].title)
-                            .padding(16)
-                            .background(Capsule().stroke(Color.black))
-                            .lineLimit(1)
-                            .overlay {
-                                GeometryReader { reader -> Color in
-                                    let maxX = reader.frame(in: .global).maxX
-                                    
-                                    if maxX > UIScreen.main.bounds.width - 30 && !items[index][chipIndex].isExceeded {
-                                        DispatchQueue.main.async {
-                                            
-                                            items[index][chipIndex].isExceeded = true
-                                            
-                                            let lastItem = items[index][chipIndex]
-                                            
-                                            items.append([lastItem])
-                                            items[index].remove(at: chipIndex)
-                                        }
-                                    }
-                                    
-                                    return items[index][chipIndex].isSelected ? Color.red : Color.clear
-                                }
-                            }
-                            .onTapGesture(perform: {
-                                items[index][chipIndex].isSelected = !items[index][chipIndex].isSelected
-                            })
-                            .clipShape(Capsule())
-                        
-                    }
-                }
-                
-            }
+            list1
         }
         .onChange(of: items, perform: { (newValue: [[Item]]) in
             let reduced = newValue.reduce([], +)
@@ -89,6 +95,7 @@ struct ContentView: View {
             
         })
         .frame(width: UIScreen.main.bounds.width)
+        .background(Color.gray)
         .padding()
     }
 }
